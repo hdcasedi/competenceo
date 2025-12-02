@@ -1,14 +1,199 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
-  provider = "prisma-client"
+  provider = "prisma-client-js"
   output   = "../app/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  TEACHER
+  STUDENT
+  ADMIN
+}
+
+enum Grade {
+  A
+  B
+  C
+  D
+}
+
+model User {
+  id             String    @id @default(cuid())
+  email          String?   @unique
+  emailVerified  DateTime?
+  name           String?
+  firstName      String?
+  lastName       String?
+  image          String?
+  role           Role      @default(STUDENT)
+  passwordHash   String?
+
+  accounts       Account[]
+  sessions       Session[]
+
+  classrooms     Classroom[]         @relation("TeacherClassrooms")
+  domains        CompetencyDomain[]  @relation("TeacherDomains")
+  sessionsLed    EvaluationSession[] @relation("TeacherSessions")
+
+  enrollments    Enrollment[]        @relation("StudentEnrollments")
+  evaluations    Evaluation[]        @relation("StudentEvaluations")
+
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([role])
+}
+
+model Classroom {
+  id          String    @id @default(cuid())
+  name        String
+  description String?
+  teacher     User      @relation("TeacherClassrooms", fields: [teacherId], references: [id], onDelete: Cascade)
+  teacherId   String
+
+  enrollments Enrollment[]
+  sessions    EvaluationSession[]
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([teacherId])
+  @@unique([teacherId, name])
+}
+
+model Enrollment {
+  id           String    @id @default(cuid())
+  classroom    Classroom @relation(fields: [classroomId], references: [id], onDelete: Cascade)
+  classroomId  String
+  student      User      @relation("StudentEnrollments", fields: [studentId], references: [id], onDelete: Cascade)
+  studentId    String
+
+  seatNumber   String?
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+
+  @@unique([classroomId, studentId])
+  @@index([studentId])
+  @@index([classroomId])
+}
+
+model CompetencyDomain {
+  id           String       @id @default(cuid())
+  title        String
+  description  String?
+  createdBy    User         @relation("TeacherDomains", fields: [createdById], references: [id], onDelete: Cascade)
+  createdById  String
+
+  competencies Competency[]
+
+  isArchived   Boolean      @default(false)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  @@unique([createdById, title])
+  @@index([createdById])
+}
+
+model Competency {
+  id           String            @id @default(cuid())
+  domain       CompetencyDomain  @relation(fields: [domainId], references: [id], onDelete: Cascade)
+  domainId     String
+
+  code         String?
+  title        String
+  description  String?
+  isActive     Boolean           @default(true)
+
+  evaluations  Evaluation[]
+
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  @@unique([domainId, title])
+  @@index([domainId])
+  @@index([code])
+}
+
+model EvaluationSession {
+  id           String     @id @default(cuid())
+  name         String?
+  classroom    Classroom  @relation(fields: [classroomId], references: [id], onDelete: Cascade)
+  classroomId  String
+  teacher      User       @relation("TeacherSessions", fields: [teacherId], references: [id], onDelete: Cascade)
+  teacherId    String
+
+  startedAt    DateTime   @default(now())
+  endedAt      DateTime?
+
+  evaluations  Evaluation[]
+
+  @@index([classroomId])
+  @@index([teacherId])
+  @@index([startedAt])
+}
+
+model Evaluation {
+  id            String            @id @default(cuid())
+  session       EvaluationSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  sessionId     String
+  student       User              @relation("StudentEvaluations", fields: [studentId], references: [id], onDelete: Cascade)
+  studentId     String
+  competency    Competency        @relation(fields: [competencyId], references: [id], onDelete: Restrict)
+  competencyId  String
+
+  grade         Grade
+  comment       String?
+
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  @@unique([sessionId, studentId, competencyId])
+  @@index([studentId])
+  @@index([competencyId])
+  @@index([sessionId])
+  @@index([studentId, competencyId])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expires])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
 }
