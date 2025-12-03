@@ -1,5 +1,6 @@
 import { auth } from "@/auth"
 import prisma from "@/lib/prisma"
+import type { Prisma } from "@/app/generated/prisma"
 
 export default async function SessionsPage() {
   const session = await auth()
@@ -13,7 +14,10 @@ export default async function SessionsPage() {
     )
   }
 
-  let sessions: Awaited<ReturnType<typeof prisma.evaluationSession.findMany>> = []
+  type SessionWithRefs = Prisma.EvaluationSessionGetPayload<{
+    include: { classroom: true, group: true }
+  }>
+  let sessions: SessionWithRefs[] = []
   let dbError: string | null = null
   try {
     sessions = await prisma.evaluationSession.findMany({

@@ -2,6 +2,7 @@ import { auth } from "@/auth"
 import prisma from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
 import { Button } from "@/components/ui/button"
+import type { Prisma } from "@/app/generated/prisma"
 
 async function removeEnrollment(formData: FormData) {
   "use server"
@@ -34,11 +35,10 @@ export default async function EnrollmentsPage() {
   }
 
   let dbError: string | null = null
-  let classes:
-    | Awaited<
-        ReturnType<typeof prisma.classroom.findMany>
-      >
-    | [] = []
+  type ClassroomWithEnrollments = Prisma.ClassroomGetPayload<{
+    include: { enrollments: { include: { student: true } } }
+  }>
+  let classes: ClassroomWithEnrollments[] = []
   try {
     classes = await prisma.classroom.findMany({
       where: { teacherId: session.user.id },

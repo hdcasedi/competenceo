@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
+import type { Prisma } from "@/app/generated/prisma"
 
 async function createCompetency(formData: FormData) {
   "use server"
@@ -69,8 +70,10 @@ export default async function CompetenciesPage() {
     )
   }
 
-  let domains: Awaited<ReturnType<typeof prisma.competencyDomain.findMany>> = []
-  let competencies: Awaited<ReturnType<typeof prisma.competency.findMany>> = []
+  type Domain = Prisma.CompetencyDomainGetPayload<{}>
+  type CompetencyWithDomain = Prisma.CompetencyGetPayload<{ include: { domain: true } }>
+  let domains: Domain[] = []
+  let competencies: CompetencyWithDomain[] = []
   let dbError: string | null = null
   try {
     ;[domains, competencies] = await Promise.all([
