@@ -59,7 +59,6 @@ export const {
             email: user.email ?? undefined,
             name: user.name ?? undefined,
             image: user.image ?? undefined,
-            // @ts-expect-error include role on token/session via callbacks
             role: user.role,
           }
         } catch (e) {
@@ -73,16 +72,14 @@ export const {
     async jwt({ token, user }) {
       if (user) {
         token.sub = user.id
-        // @ts-expect-error augment token with role
-        token.role = (user as any).role
+        ;(token as any).role = (user as any).role
       }
       return token
     },
     async session({ session, token }) {
       if (session.user) {
         session.user.id = (token.sub as string) || session.user.id
-        // @ts-expect-error role on session
-        session.user.role = (token as any).role
+        ;(session.user as any).role = (token as any).role
       }
       return session
     },
