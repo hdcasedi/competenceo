@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
+import type { Prisma } from "@/app/generated/prisma"
 
 async function createStudent(formData: FormData) {
   "use server"
@@ -70,16 +71,11 @@ export default async function StudentsPage() {
   }
 
   let dbError: string | null = null
-  let allStudents:
-    | Awaited<ReturnType<typeof prisma.user.findMany>>
-    | [] = []
-  let classesWithEnrollments:
-    | Awaited<
-        ReturnType<
-          typeof prisma.classroom.findMany
-        >
-      >
-    | [] = []
+  let allStudents: Awaited<ReturnType<typeof prisma.user.findMany>> = []
+  type ClassroomWithEnrollments = Prisma.ClassroomGetPayload<{
+    include: { enrollments: { include: { student: true } } }
+  }>
+  let classesWithEnrollments: ClassroomWithEnrollments[] = []
 
   try {
     ;[allStudents, classesWithEnrollments] = await Promise.all([
