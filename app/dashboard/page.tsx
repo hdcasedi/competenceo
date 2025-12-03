@@ -11,7 +11,7 @@ export default async function DashboardPage() {
         <h1 className="text-2xl font-semibold">Tableau de bord</h1>
         {session?.user ? (
           <p className="mt-2 text-muted-foreground">
-            Bienvenue {session.user.name ?? session.user.email} ({/* @ts-expect-error role ajouté */ session.user.role})
+            Bienvenue {session.user.name ?? session.user.email} ({session.user.role})
           </p>
         ) : (
           <p className="mt-2 text-muted-foreground">Non connecté</p>
