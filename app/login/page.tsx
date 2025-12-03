@@ -4,7 +4,7 @@ import { LoginForm } from "./login-form"
 export default function LoginPage() {
   return (
     <div className="min-h-dvh flex items-center justify-center bg-gray-50 p-4">
-      <Suspense fallback={<div>Chargement...</div>}>
+      <Suspense fallback={<span className="sr-only">Chargement…</span>}>
         <LoginForm />
       </Suspense>
     </div>
