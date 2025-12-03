@@ -17,6 +17,31 @@ enum Role {
   ADMIN
 }
 
+// Matière enseignée
+enum Subject {
+  MATHEMATIQUES
+  FRANCAIS
+  HISTOIRE_GEOGRAPHIE
+  SCIENCES
+  PHYSIQUE_CHIMIE
+  SVT
+  TECHNOLOGIE
+  ANGLAIS
+  ESPAGNOL
+  ALLEMAND
+  PHILOSOPHIE
+  ECONOMIE
+  SES
+  INFORMATIQUE
+  ARTS_PLASTIQUES
+  MUSIQUE
+  EPS
+  EMC
+  LATIN
+  GREC
+  AUTRE
+}
+
 enum Grade {
   A
   B
@@ -34,6 +59,8 @@ model User {
   image          String?
   role           Role      @default(STUDENT)
   passwordHash   String?
+  subject        Subject?
+  subjectOther   String?
 
   accounts       Account[]
   sessions       Session[]

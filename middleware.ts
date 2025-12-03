@@ -12,6 +12,7 @@ export default function middleware(req: NextRequest) {
   const isLoggedIn = Boolean(sessionToken)
   const isAuthRoute =
     nextUrl.pathname.startsWith("/login") ||
+    nextUrl.pathname.startsWith("/signup") ||
     nextUrl.pathname.startsWith("/api/auth") ||
     nextUrl.pathname.startsWith("/_next") ||
     nextUrl.pathname.startsWith("/favicon") ||

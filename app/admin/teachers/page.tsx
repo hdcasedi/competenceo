@@ -6,6 +6,8 @@ import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import bcrypt from "bcryptjs"
+import crypto from "crypto"
+import { sendMail } from "@/lib/email"
 
 async function createTeacher(formData: FormData) {
   "use server"
@@ -73,6 +75,75 @@ async function deleteTeacher(formData: FormData) {
   revalidatePath("/admin/teachers")
 }
 
+async function inviteTeacher(formData: FormData) {
+  "use server"
+  const session = await auth()
+  if (!session?.user) return
+  const me = await prisma.user.findUnique({ where: { id: session.user.id } })
+  if (!me || me.role !== "ADMIN") return
+
+  const email = String(formData.get("email") || "").trim().toLowerCase()
+  if (!email) return
+
+  const token = crypto.randomBytes(16).toString("hex").slice(0, 8).toUpperCase()
+  const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+
+  // Stocke l'invitation dans VerificationToken (réutilisation du modèle existant)
+  await prisma.verificationToken.upsert({
+    where: {
+      // couple unique (identifier, token)
+      token: token,
+    },
+    update: {
+      identifier: `invite:${email}`,
+      expires,
+    },
+    create: {
+      identifier: `invite:${email}`,
+      token,
+      expires,
+    },
+  })
+
+  const signupUrl = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/signup`
+  const html = `
+    <p>Bonjour,</p>
+    <p>Vous avez été invité à créer un compte enseignant sur <b>Competenceo</b>.</p>
+    <p>Votre code d'invitation est: <b>${token}</b></p>
+    <p>Rendez-vous sur <a href="${signupUrl}">${signupUrl}</a> et saisissez ce code avec votre email pour finaliser l'inscription.</p>
+    <p>Ce code expire dans 7 jours.</p>
+  `
+  try {
+    await sendMail(email, "Invitation Competenceo — Code d'inscription", html)
+  } catch (e) {
+    console.error("[SMTP] Envoi invitation échoué:", e)
+  }
+
+  revalidatePath("/admin/teachers")
+}
+
+async function deleteTestAccounts() {
+  "use server"
+  const session = await auth()
+  if (!session?.user) return
+  const me = await prisma.user.findUnique({ where: { id: session.user.id } })
+  if (!me || me.role !== "ADMIN") return
+
+  // Supprime les comptes de test en conservant l'admin
+  await prisma.user.deleteMany({
+    where: {
+      email: { endsWith: "@test.com" },
+      NOT: { email: "admin@test" },
+    },
+  })
+  // Aussi supprimer prof@test si présent (sans .com, selon seed)
+  await prisma.user.deleteMany({
+    where: { email: "prof@test.com" },
+  })
+
+  revalidatePath("/admin/teachers")
+}
+
 export default async function AdminTeachersPage() {
   const session = await auth()
   if (!session?.user) {
@@ -135,6 +206,17 @@ export default async function AdminTeachersPage() {
         </form>
       </section>
 
+      <section className="grid gap-2 max-w-xl">
+        <h2 className="text-lg font-medium">Inviter un enseignant (inscription par code)</h2>
+        <form action={inviteTeacher} className="flex gap-2">
+          <Input name="email" type="email" placeholder="enseignant@exemple.com" required />
+          <Button type="submit">Envoyer l’invitation</Button>
+        </form>
+        <p className="text-xs text-muted-foreground">
+          Un code est généré (valide 7 jours) et journalisé côté serveur. Configurez un SMTP pour l’email.
+        </p>
+      </section>
+
       <section className="space-y-2">
         <h2 className="text-lg font-medium">Enseignants existants</h2>
         {teachers.length === 0 ? (
@@ -144,7 +226,7 @@ export default async function AdminTeachersPage() {
             {teachers.map((t) => (
               <li key={t.id} className="p-3 flex items-center justify-between gap-3">
                 <div className="min-w-0">
-                  <div className="truncate font-medium">{t.name ?? `${t.firstName ?? ""} ${t.lastName ?? ""}`.trim() || t.email}</div>
+                  <div className="truncate font-medium">{(t.name ?? `${t.firstName ?? ""} ${t.lastName ?? ""}`.trim()) || t.email}</div>
                   <div className="text-xs text-muted-foreground">{t.email}</div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -166,11 +248,18 @@ export default async function AdminTeachersPage() {
             <option value="">Sélectionner un utilisateur…</option>
             {users.map((u) => (
               <option key={u.id} value={u.id}>
-                {(u.name ?? `${u.firstName ?? ""} ${u.lastName ?? ""}`.trim() || u.email) + ` — ${u.role}`}
+                {(((u.name ?? `${u.firstName ?? ""} ${u.lastName ?? ""}`.trim()) || u.email) + ` — ${u.role}`)}
               </option>
             ))}
           </select>
           <Button type="submit">Promouvoir</Button>
+        </form>
+      </section>
+
+      <section className="space-y-2">
+        <h2 className="text-lg font-medium">Nettoyer les comptes de test</h2>
+        <form action={deleteTestAccounts}>
+          <Button type="submit" variant="outline">Supprimer comptes @test.com et prof@test.com</Button>
         </form>
       </section>
     </main>

@@ -27,7 +27,7 @@ export default async function TeachersPage() {
             <li key={t.id} className="p-3 flex items-center justify-between">
               <div className="min-w-0">
                 <div className="truncate font-medium">
-                  {t.name ?? `${t.firstName ?? ""} ${t.lastName ?? ""}`.trim() || t.email}
+                  {(t.name ?? `${t.firstName ?? ""} ${t.lastName ?? ""}`.trim()) || t.email}
                 </div>
                 <div className="text-xs text-muted-foreground">{t.email}</div>
               </div>

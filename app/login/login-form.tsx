@@ -80,6 +80,9 @@ export function LoginForm() {
           Astuce: utilisez <span className="font-medium">prof@test.com</span> / <span className="font-medium">password</span>
         </p>
       </CardFooter>
+      <div className="mt-2 text-center">
+        <a href="/signup" className="text-sm text-primary underline">Inscription enseignant (code d’invitation)</a>
+      </div>
     </Card>
   )
 }

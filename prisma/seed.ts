@@ -29,6 +29,29 @@ async function upsertTeacher() {
   return teacher
 }
 
+async function upsertAdmin() {
+  const passwordHash = await bcrypt.hash("azerty", 10)
+  const admin = await prisma.user.upsert({
+    where: { email: "admin@test" },
+    update: {
+      role: Role.ADMIN,
+      passwordHash,
+      firstName: "Admin",
+      lastName: "User",
+      name: "Admin",
+    },
+    create: {
+      email: "admin@test",
+      role: Role.ADMIN,
+      passwordHash,
+      firstName: "Admin",
+      lastName: "User",
+      name: "Admin",
+    },
+  })
+  return admin
+}
+
 async function createClassrooms(teacherId: string) {
   const names = ["Terminale S1", "Seconde A"]
   const classrooms = await Promise.all(
@@ -182,6 +205,7 @@ async function createSessionsAndEvaluations(teacherId: string) {
 
 async function main() {
   console.log("Seeding database...")
+  await upsertAdmin()
   const teacher = await upsertTeacher()
   const classrooms = await createClassrooms(teacher.id)
   const students = await createStudents(20)
