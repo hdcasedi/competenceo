@@ -1,5 +1,3 @@
-'use server'
-
 import { Suspense } from "react"
 import { LoginForm } from "./login-form"
 
