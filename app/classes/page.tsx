@@ -123,10 +123,7 @@ export default async function ClassesPage() {
                   </div>
                   <div className="sm:col-span-2 flex gap-2">
                     <Button type="submit">Mettre à jour</Button>
-                    <form action={deleteClass}>
-                      <input type="hidden" name="id" value={c.id} />
-                      <Button type="submit" variant="outline">Supprimer</Button>
-                    </form>
+                    <Button formAction={deleteClass} variant="outline">Supprimer</Button>
                   </div>
                 </form>
               </li>

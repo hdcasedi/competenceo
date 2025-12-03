@@ -168,10 +168,7 @@ export default async function CompetenciesPage() {
                   </div>
                   <div className="md:col-span-2 flex gap-2">
                     <Button type="submit">Mettre à jour</Button>
-                    <form action={deleteCompetency}>
-                      <input type="hidden" name="id" value={c.id} />
-                      <Button type="submit" variant="outline">Supprimer</Button>
-                    </form>
+                    <Button formAction={deleteCompetency} variant="outline">Supprimer</Button>
                   </div>
                 </form>
               </li>

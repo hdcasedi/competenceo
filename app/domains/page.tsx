@@ -115,10 +115,7 @@ export default async function DomainsPage() {
                   </div>
                   <div className="sm:col-span-2 flex gap-2">
                     <Button type="submit">Mettre à jour</Button>
-                    <form action={deleteDomain}>
-                      <input type="hidden" name="id" value={d.id} />
-                      <Button type="submit" variant="outline">Supprimer</Button>
-                    </form>
+                    <Button formAction={deleteDomain} variant="outline">Supprimer</Button>
                   </div>
                 </form>
               </li>
